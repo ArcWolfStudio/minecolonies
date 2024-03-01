@@ -1,0 +1,25 @@
+{
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      {
+        "item": "tfc:wood/log/white_cedar"
+      }
+    ],
+    "alternate-output": [
+      {
+        "item": "tfc:wood/stripped_log/white_cedar"
+      },
+      {
+        "item": "tfc:wood/stripped_wood/white_cedar"
+      },
+      {
+        "item": "tfc:wood/wood/white_cedar"
+      }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "axe"
+  }
+}

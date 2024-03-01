@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:bone_meal",
+    "tfc:compost",
+    "tfc:groundcover/guano",
+    "tfc:pure_nitrogen",
+    "tfc:pure_phosphorus",
+    "tfc:pure_potassium",
+    "tfc:powder/saltpeter",
+    "tfc:powder/sylvite",
+    "tfc:powder/wood_ash"
+
+  ]
+}

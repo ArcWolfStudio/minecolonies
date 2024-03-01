@@ -1,0 +1,25 @@
+{
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      {
+        "item": "tfc:wood/log/hickory"
+      }
+    ],
+    "alternate-output": [
+      {
+        "item": "tfc:wood/stripped_log/hickory"
+      },
+      {
+        "item": "tfc:wood/stripped_wood/hickory"
+      },
+      {
+        "item": "tfc:wood/wood/hickory"
+      }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "axe"
+  }
+}

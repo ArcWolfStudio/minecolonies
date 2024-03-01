@@ -1,0 +1,25 @@
+{
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      {
+        "item": "tfc:wood/log/kapok"
+      }
+    ],
+    "alternate-output": [
+      {
+        "item": "tfc:wood/stripped_log/kapok"
+      },
+      {
+        "item": "tfc:wood/stripped_wood/kapok"
+      },
+      {
+        "item": "tfc:wood/wood/kapok"
+      }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "axe"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      {
+        "item": "tfc:wood/log/rosewood"
+      }
+    ],
+    "alternate-output": [
+      {
+        "item": "tfc:wood/stripped_log/rosewood"
+      },
+      {
+        "item": "tfc:wood/stripped_wood/rosewood"
+      },
+      {
+        "item": "tfc:wood/wood/rosewood"
+      }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "axe"
+  }
+}

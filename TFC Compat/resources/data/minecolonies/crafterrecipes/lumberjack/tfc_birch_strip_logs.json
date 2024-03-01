@@ -1,0 +1,25 @@
+{
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      {
+        "item": "tfc:wood/log/birch"
+      }
+    ],
+    "alternate-output": [
+      {
+        "item": "tfc:wood/stripped_log/birch"
+      },
+      {
+        "item": "tfc:wood/stripped_wood/birch"
+      },
+      {
+        "item": "tfc:wood/wood/birch"
+      }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "axe"
+  }
+}
