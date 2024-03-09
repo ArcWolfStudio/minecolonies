@@ -13,6 +13,9 @@ repositories {
         name "Rei"
         url "https://maven.shedaniel.me/"
     }
+    maven {
+        url "https://cursemaven.com"
+    }
 }
 
 dependencies {
@@ -45,6 +48,10 @@ dependencies {
     }
 
     implementation fg.deobf("com.ldtteam:datagenerators:${project.dataGeneratorsVersion}:universal") {
+        transitive = false
+    }
+
+    implementation fg.deobf("curse.maven:terrafirmacraft-302973:5096511") {
         transitive = false
     }
 

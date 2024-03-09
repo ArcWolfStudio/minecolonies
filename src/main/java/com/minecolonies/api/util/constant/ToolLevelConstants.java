@@ -18,12 +18,14 @@ public final class ToolLevelConstants
      */
     @NonNls
     public static final int TOOL_LEVEL_WOOD_OR_GOLD        = 0;
+    // TFC Copper = 0
 
     /**
      * Tool level for stone.
      */
     @NonNls
     public static final int BASIC_TOOL_LEVEL        = 1;
+    // TFC Bronze = 1
 
     /**
      * Armor level for leather.
@@ -36,24 +38,28 @@ public final class ToolLevelConstants
      */
     @NonNls
     public static final int ARMOR_LEVEL_GOLD = 1;
+    //TFC Copper
 
     /**
      * Armor level for chain.
      */
     @NonNls
     public static final int ARMOR_LEVEL_CHAIN = 2;
+    //TFC Bronze
 
     /**
      * Armor level for iron.
      */
     @NonNls
     public static final int ARMOR_LEVEL_IRON = 3;
+    // TFC Iron
 
     /**
      * Armor level for diamond.
      */
     @NonNls
     public static final int ARMOR_LEVEL_DIAMOND = 4;
+    //TFC Steel
 
     /**
      * Armor level for diamond.

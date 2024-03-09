@@ -12,6 +12,8 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
 import com.minecolonies.core.colony.jobs.AbstractJob;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIInteract;
+import net.dries007.tfc.common.entities.livestock.TFCAnimal;
+import net.dries007.tfc.common.entities.livestock.TFCAnimalProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -43,7 +45,8 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
     /**
      * How many animals per hut level the worker should max have.
      */
-    private static final int ANIMAL_MULTIPLIER = 2;
+    private static final int ANIMAL_MULTIPLIER = 3;
+//    private static final int ANIMAL_MULTIPLIER = 2;
 
     /**
      * Amount of animals needed to bread.
@@ -75,7 +78,8 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
     /**
      * Level limit to feed children.
      */
-    public static final int LIMIT_TO_FEED_CHILDREN = 10;
+    public static final int LIMIT_TO_FEED_CHILDREN = 0;
+//    public static final int LIMIT_TO_FEED_CHILDREN = 10;
 
     /**
      * Number of actions needed to dump inventory.
@@ -106,7 +110,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
     /**
      * Selected breeding partners
      */
-    private final List<Animal> animalsToBreed = new ArrayList<>();
+    private final List<TFCAnimal> animalsToBreed = new ArrayList<>();
 
     /**
      * Recently fed animals
@@ -197,7 +201,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
 
         for (final AnimalHerdingModule module : building.getModulesByType(AnimalHerdingModule.class))
         {
-            final List<? extends Animal> animals = searchForAnimals(module::isCompatible);
+            final List<? extends TFCAnimal> animals = (List<? extends TFCAnimal>) searchForAnimals(module::isCompatible);
             if (animals.isEmpty())
             {
                 continue;
@@ -206,11 +210,16 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             current_module = module;
 
             int numOfBreedableAnimals = 0;
-            for (final Animal entity : animals)
+            int numOfFeedableAnimals = 0;
+            for (final TFCAnimal entity : animals)
             {
                 if (isBreedAble(entity))
                 {
                     numOfBreedableAnimals++;
+                }
+                else if (isFeedAble(entity))
+                {
+                    numOfFeedableAnimals++;
                 }
             }
 
@@ -222,17 +231,30 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             {
                 return HERDER_PICKUP;
             }
+//            else if (maxAnimals(animals)) //need new logic
+//            {
+//                return HERDER_BUTCHER;
+//            }
             else if (ColonyConstants.rand.nextDouble() < chanceToButcher(animals))
             {
                 return HERDER_BUTCHER;
             }
-            else if (canBreedChildren() && numOfBreedableAnimals >= NUM_OF_ANIMALS_TO_BREED && hasBreedingItem && breedTimeOut == 0)
-            {
-                return HERDER_BREED;
-            }
-            else if (ColonyConstants.rand.nextDouble() < FEED_CHANCE && hasBreedingItem)
+//            else if (canBreedChildren() && numOfBreedableAnimals >= NUM_OF_ANIMALS_TO_BREED && hasBreedingItem && breedTimeOut == 0)
+//            {
+//                return HERDER_BREED;
+//            }
+//            else if (ColonyConstants.rand.nextDouble() < FEED_CHANCE && hasBreedingItem)
+//            {
+//                return HERDER_FEED;
+//            }
+//            else if (canFeedChildren() && numOfFeedableAnimals > 0 && hasBreedingItem)
+            else if (numOfFeedableAnimals > 0 && hasBreedingItem)
             {
                 return HERDER_FEED;
+            }
+            else if ( numOfBreedableAnimals >= NUM_OF_ANIMALS_TO_BREED && hasBreedingItem && breedTimeOut == 0) //0.1.22
+            {
+                return HERDER_BREED;
             }
         }
 
@@ -245,9 +267,11 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      * @param entity to check
      * @return true if breed able
      */
-    protected static boolean isBreedAble(final Animal entity)
+    protected static boolean isBreedAble(final TFCAnimal entity)
+//    protected boolean isBreedAble(final TFCAnimal entity)
     {
-        return entity.getAge() == 0 && (entity.isInLove() || entity.canFallInLove());
+//        return entity.getAge() == 0 && (entity.isInLove() || entity.canFallInLove());
+        return !entity.isFertilized() && !entity.isBaby();
     }
 
     /**
@@ -256,9 +280,16 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      * @param entity to check
      * @return true if feed able
      */
-    protected boolean isFeedAble(final Animal entity)
+    protected boolean isFeedAble(final TFCAnimal entity)
     {
-        return entity.isBaby() && MAX_ENTITY_AGE / entity.getAge() <= 1 + getSecondarySkillLevel() / 100.0;
+//        return entity.isBaby() && MAX_ENTITY_AGE / entity.getAge() <= 1 + getSecondarySkillLevel() / 100.0;
+        if(entity.isHungry() && entity.isBaby() && entity.getFamiliarity() < .99f) {
+            return true;
+        }
+        if(entity.isHungry() && !entity.isBaby() && entity.getFamiliarity() < .35f) {
+            return true;
+        }
+        return false; //0.1.4
     }
 
     /**
@@ -266,10 +297,10 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      *
      * @return true if so.
      */
-    protected boolean canBreedChildren()
-    {
-        return building.getSetting(AbstractBuilding.BREEDING).getValue();
-    }
+//    protected boolean canBreedChildren()
+//    {
+//        return building.getSetting(AbstractBuilding.BREEDING).getValue();
+//    }
 
     /**
      * Redirects the herder to their building.
@@ -323,6 +354,74 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      *
      * @return The next {@link IAIState}.
      */
+//    protected IAIState butcherAnimals()
+//    {
+//        if (current_module == null)
+//        {
+//            return DECIDE;
+//        }
+//
+//        final List<? extends Animal> animals = searchForAnimals(current_module::isCompatible);
+//
+//        if (!equipTool(InteractionHand.MAIN_HAND, ToolType.AXE))
+//        {
+//            return START_WORKING;
+//        }
+//
+//        if (animals.isEmpty())
+//        {
+//            return DECIDE;
+//        }
+//
+//        final BlockPos center = getCenterOfHerd(animals);
+//
+//        // Butcher furthest animal
+//        animals.sort(Comparator.<Animal>comparingDouble(an -> an.blockPosition().distSqr(center)).reversed());
+//
+//        Animal toKill = null;
+//
+//        for (final Animal entity : animals)
+//        {
+//            if (!entity.isBaby() && !entity.isInLove())
+//            {
+//                if (toKill == null || !entity.level.canSeeSky(entity.blockPosition()) && toKill.level.canSeeSky(toKill.blockPosition()))
+//                {
+//                    toKill = entity;
+//                }
+//            }
+//        }
+//
+//        if (toKill == null)
+//        {
+//            return DECIDE;
+//        }
+//
+//        butcherAnimal(toKill);
+//
+//        if (!toKill.isAlive())
+//        {
+//            worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
+//            incrementActionsDoneAndDecSaturation();
+//            fedRecently.remove(toKill.getUUID());
+//            return DECIDE;
+//        }
+//
+//        return HERDER_BUTCHER;
+//    }
+
+    protected boolean isButcherable(final TFCAnimal entity){
+        if(entity.isMale() && !entity.isBaby()){
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isButcherable2(final TFCAnimal entity){
+        if(!entity.isMale() && !entity.isBaby() &&!entity.isFertilized()){
+            return true;
+        }
+        return false;
+    }
     protected IAIState butcherAnimals()
     {
         if (current_module == null)
@@ -330,49 +429,95 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             return DECIDE;
         }
 
-        final List<? extends Animal> animals = searchForAnimals(current_module::isCompatible);
+        final List<? extends TFCAnimal> animals = searchForAnimals(current_module::isCompatible);
+        //TODO: also needs work
 
+
+        int numOfMales = 0;
+        for(final TFCAnimal entity : animals){
+            if (isButcherable(entity)){
+                numOfMales++;
+            }
+        }
+        final TFCAnimal maleOne = animals.stream().filter(animal1 -> animal1.isMale()).findAny().orElse(null);
+        final TFCAnimal maletwo = animals.stream().filter(animal2 ->animal2.isMale() && !animal2.equals(maleOne)).findAny().orElse(null);
+        if(maleOne == null){
+            return DECIDE;
+        }
+        if(maletwo == null){
+            return DECIDE;
+        }
         if (!equipTool(InteractionHand.MAIN_HAND, ToolType.AXE))
         {
             return START_WORKING;
         }
 
-        if (animals.isEmpty())
-        {
+        if(numOfMales >= 2 && !maleOne.equals(maletwo)){
+            int a = maleOne.getGeneticSize();
+            int b = maletwo.getGeneticSize();
+            if(a > b){
+                butcherAnimal(maletwo);
+            }
+            else if(a < b){
+                butcherAnimal(maleOne);
+            }
             return DECIDE;
         }
 
-        final BlockPos center = getCenterOfHerd(animals);
-
-        // Butcher furthest animal
-        animals.sort(Comparator.<Animal>comparingDouble(an -> an.blockPosition().distSqr(center)).reversed());
-
-        Animal toKill = null;
-
-        for (final Animal entity : animals)
-        {
-            if (!entity.isBaby() && !entity.isInLove())
-            {
-                if (toKill == null || !entity.level.canSeeSky(entity.blockPosition()) && toKill.level.canSeeSky(toKill.blockPosition()))
-                {
-                    toKill = entity;
-                }
+        int numOfFemales = 0;
+        for(final TFCAnimal entity : animals){
+            if (isButcherable2(entity)){
+                numOfFemales++;
             }
         }
-
-        if (toKill == null)
-        {
+        final TFCAnimal femaleOne = animals.stream().filter(animal3 -> !animal3.isMale() && !animal3.isBaby() && !animal3.isFertilized()).findAny().orElse(null);
+        final TFCAnimal femaletwo = animals.stream().filter(animal4 ->!animal4.isMale() && !animal4.isBaby() && !animal4.isFertilized() && !animal4.equals(femaleOne)).findAny().orElse(null);
+        if(femaleOne == null){
+            return DECIDE;
+        }
+        if(femaletwo == null){
             return DECIDE;
         }
 
-        butcherAnimal(toKill);
+        if(numOfFemales >= (building.getBuildingLevel() * getMaxAnimalMultiplier()) -1 ){
+//        if(numOfFemales >= (building.getBuildingLevel() * getMaxAnimalMultiplier())-1 && !femaleOne.equals(femaletwo)){
+            int a = femaleOne.getGeneticSize();
+            int b = femaletwo.getGeneticSize();
+            if(a > b){
+                butcherAnimal(femaletwo);
+            }
+            else if(a < b){
+                butcherAnimal(femaleOne);
+            }
+            return DECIDE;
+        }
 
-        if (!toKill.isAlive())
+
+
+
+        final TFCAnimal animal = animals
+                .stream()
+                .filter(animalToButcher -> !animalToButcher.isBaby()
+//                                              && !animalToButcher.isInLove() //0.1.15 test removed
+                        && !animalToButcher.isFertilized())
+                .findFirst()
+                .orElse(null);
+
+        if (animal == null)
+        {
+            return DECIDE;
+        }
+        if (animal.getAgeType() == TFCAnimalProperties.Age.OLD){
+            butcherAnimal(animal);
+        }
+
+
+        butcherAnimal(animal);
+
+        if (!animal.isAlive())
         {
             worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
             incrementActionsDoneAndDecSaturation();
-            fedRecently.remove(toKill.getUUID());
-            return DECIDE;
         }
 
         return HERDER_BUTCHER;
@@ -405,6 +550,72 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      *
      * @return The next {@link IAIState}.
      */
+//    protected IAIState breedAnimals()
+//    {
+//        if (current_module == null)
+//        {
+//            worker.getCitizenItemHandler().removeHeldItem();
+//            return DECIDE;
+//        }
+//
+//        if (breedTwoAnimals())
+//        {
+//            return getState();
+//        }
+//
+//        final Predicate<Animal> predicate = ((Predicate<Animal>) current_module::isCompatible).and(AbstractEntityAIHerder::isBreedAble);
+//        final List<? extends Animal> breedables = searchForAnimals(predicate);
+//
+//        if (breedables.size() < 2)
+//        {
+//            worker.getCitizenItemHandler().removeHeldItem();
+//            breedTimeOut = TICKS_SECOND * 60;
+//            return DECIDE;
+//        }
+//
+//        final BlockPos center = getCenterOfHerd(breedables);
+//
+//        // Breed closest animal
+//        breedables.sort(Comparator.<Animal>comparingDouble(an -> an.blockPosition().distSqr(center)));
+//
+//        final Animal animalOne = breedables.remove(0);
+//
+//        Animal animalTwo = null;
+//        for (final Animal animal : breedables)
+//        {
+//            if (animal.distanceTo(animalOne) <= DISTANCE_TO_BREED && canMate(animalOne, animal))
+//            {
+//                animalTwo = animal;
+//                break;
+//            }
+//        }
+//
+//        if (animalTwo == null)
+//        {
+//            worker.getCitizenItemHandler().removeHeldItem();
+//            breedTimeOut = TICKS_SECOND * 20;
+//            return DECIDE;
+//        }
+//
+//        if (!equipItem(InteractionHand.MAIN_HAND, current_module.getBreedingItems()))
+//        {
+//            worker.getCitizenItemHandler().removeHeldItem();
+//            return START_WORKING;
+//        }
+//
+//
+//        animalsToBreed.add(animalOne);
+//        animalsToBreed.add(animalTwo);
+//
+//        if (breedTwoAnimals())
+//        {
+//            return getState();
+//        }
+//
+//        breedTimeOut = TICKS_SECOND * 60;
+//        worker.getCitizenItemHandler().removeHeldItem();
+//        return IDLE;
+//    }
     protected IAIState breedAnimals()
     {
         if (current_module == null)
@@ -417,38 +628,23 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
         {
             return getState();
         }
-
-        final Predicate<Animal> predicate = ((Predicate<Animal>) current_module::isCompatible).and(AbstractEntityAIHerder::isBreedAble);
-        final List<? extends Animal> breedables = searchForAnimals(predicate);
-
-        if (breedables.size() < 2)
+        final Predicate<TFCAnimal> predicate = ((Predicate<TFCAnimal>) current_module::isCompatible).and(AbstractEntityAIHerder::isBreedAble);
+        final List<? extends TFCAnimal> breedables = new ArrayList<>(searchForAnimals(predicate));
+        Collections.shuffle(breedables);
+        final TFCAnimal animalOne = breedables.stream().filter(animal ->!animal.isMale() && !animal.isFertilized() && animal.isHungry()).findAny().orElse(null);
+        if (animalOne == null)
         {
             worker.getCitizenItemHandler().removeHeldItem();
-            breedTimeOut = TICKS_SECOND * 60;
+            breedTimeOut = 15;
             return DECIDE;
         }
 
-        final BlockPos center = getCenterOfHerd(breedables);
-
-        // Breed closest animal
-        breedables.sort(Comparator.<Animal>comparingDouble(an -> an.blockPosition().distSqr(center)));
-
-        final Animal animalOne = breedables.remove(0);
-
-        Animal animalTwo = null;
-        for (final Animal animal : breedables)
-        {
-            if (animal.distanceTo(animalOne) <= DISTANCE_TO_BREED && canMate(animalOne, animal))
-            {
-                animalTwo = animal;
-                break;
-            }
-        }
+        final TFCAnimal animalTwo = breedables.stream().filter(animal -> animal.isMale() && animal.isHungry()).findAny().orElse(null);
 
         if (animalTwo == null)
         {
             worker.getCitizenItemHandler().removeHeldItem();
-            breedTimeOut = TICKS_SECOND * 20;
+            breedTimeOut = 10;
             return DECIDE;
         }
 
@@ -457,7 +653,6 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             worker.getCitizenItemHandler().removeHeldItem();
             return START_WORKING;
         }
-
 
         animalsToBreed.add(animalOne);
         animalsToBreed.add(animalTwo);
@@ -467,45 +662,104 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             return getState();
         }
 
-        breedTimeOut = TICKS_SECOND * 60;
         worker.getCitizenItemHandler().removeHeldItem();
         return IDLE;
     }
 
-    /**
-     * Helper to check if two animals can mate
-     *
-     * @param first
-     * @param second
-     * @return
-     */
-    private static boolean canMate(final Animal first, final Animal second)
-    {
-        if (!isBreedAble(first) || !isBreedAble(second))
-        {
-            return false;
-        }
-
-        final int oldloveFirst = first.getInLoveTime();
-        final int oldloveSecond = second.getInLoveTime();
-
-        first.setInLoveTime(5);
-        second.setInLoveTime(5);
-        final boolean result = first.canMate(second);
-        first.setInLoveTime(oldloveFirst);
-        second.setInLoveTime(oldloveSecond);
-
-        return result;
-    }
+        /**
+         * Helper to check if two animals can mate
+         *
+         * @param first
+         * @param second
+         * @return
+         */
+//    private static boolean canMate(final Animal first, final Animal second)
+//    {
+//        if (!isBreedAble(first) || !isBreedAble(second))
+//        {
+//            return false;
+//        }
+//
+//        final int oldloveFirst = first.getInLoveTime();
+//        final int oldloveSecond = second.getInLoveTime();
+//
+//        first.setInLoveTime(5);
+//        second.setInLoveTime(5);
+//        final boolean result = first.canMate(second);
+//        first.setInLoveTime(oldloveFirst);
+//        second.setInLoveTime(oldloveSecond);
+//
+//        return result;
+//    }
 
     /**
      * Breed some animals together.
      *
      * @return The next {@link IAIState}.
      */
+//    protected IAIState feedAnimal()
+//    {
+//        if (current_module == null)
+//        {
+//            return DECIDE;
+//        }
+//
+//        if (!equipItem(InteractionHand.MAIN_HAND, current_module.getBreedingItems()))
+//        {
+//            return START_WORKING;
+//        }
+//
+//        List<? extends Animal> animals = searchForAnimals(current_module::isCompatible);
+//        Animal toFeed = null;
+//
+//        for (final Animal animal : animals)
+//        {
+//            if (worker.level.getGameTime() - fedRecently.getOrDefault(animal.getUUID(), 0L) > TICKS_SECOND * 60 * 5)
+//            {
+//                toFeed = animal;
+//                break;
+//            }
+//        }
+//
+//        if (toFeed == null)
+//        {
+//            return DECIDE;
+//        }
+//
+//        if (!walkingToAnimal(toFeed))
+//        {
+//            if (toFeed.isBaby() && getSecondarySkillLevel() >= LIMIT_TO_FEED_CHILDREN)
+//            {
+//                toFeed.ageUp((int) ((float) (-toFeed.getAge() / TICKS_SECOND) * 0.1F), true);
+//            }
+//
+//            // Values taken from vanilla.
+//            worker.swing(InteractionHand.MAIN_HAND);
+//            worker.getMainHandItem().shrink(1);
+//            building.getModule(STATS_MODULE).increment(ITEM_USED + ";" + worker.getMainHandItem().getItem().getDescriptionId());
+//            worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
+//            worker.level.broadcastEntityEvent(toFeed, (byte) 18);
+//            toFeed.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+//            worker.getCitizenItemHandler().removeHeldItem();
+//            fedRecently.put(toFeed.getUUID(), worker.level.getGameTime());
+//
+//            return DECIDE;
+//        }
+//
+//        worker.decreaseSaturationForContinuousAction();
+//        return getState();
+//    }
     protected IAIState feedAnimal()
     {
         if (current_module == null)
+        {
+            return DECIDE;
+        }
+
+        final Predicate<TFCAnimal> predicate = ((Predicate<TFCAnimal>) current_module::isCompatible).and(this::isFeedAble);
+        final TFCAnimal animalOne = searchForAnimals(predicate).stream().findAny().orElse(null);
+
+        if (animalOne == null)
         {
             return DECIDE;
         }
@@ -515,40 +769,15 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
             return START_WORKING;
         }
 
-        List<? extends Animal> animals = searchForAnimals(current_module::isCompatible);
-        Animal toFeed = null;
-
-        for (final Animal animal : animals)
+        if (!walkingToAnimal(animalOne))
         {
-            if (worker.level.getGameTime() - fedRecently.getOrDefault(animal.getUUID(), 0L) > TICKS_SECOND * 60 * 5)
-            {
-                toFeed = animal;
-                break;
-            }
-        }
 
-        if (toFeed == null)
-        {
-            return DECIDE;
-        }
-
-        if (!walkingToAnimal(toFeed))
-        {
-            if (toFeed.isBaby() && getSecondarySkillLevel() >= LIMIT_TO_FEED_CHILDREN)
-            {
-                toFeed.ageUp((int) ((float) (-toFeed.getAge() / TICKS_SECOND) * 0.1F), true);
-            }
-
-            // Values taken from vanilla.
             worker.swing(InteractionHand.MAIN_HAND);
             worker.getMainHandItem().shrink(1);
-            building.getModule(STATS_MODULE).increment(ITEM_USED + ";" + worker.getMainHandItem().getItem().getDescriptionId());
             worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
-            worker.level.broadcastEntityEvent(toFeed, (byte) 18);
-            toFeed.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+            animalOne.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
             worker.getCitizenItemHandler().removeHeldItem();
-            fedRecently.put(toFeed.getUUID(), worker.level.getGameTime());
-
+            animalOne.eatFood(worker.getMainHandItem(), InteractionHand.MAIN_HAND, getFakePlayer());
             return DECIDE;
         }
 
@@ -581,9 +810,9 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      * @param predicate true if the animal is interesting.
      * @return a {@link Stream} of animals in the area.
      */
-    public List<? extends Animal> searchForAnimals(final Predicate<Animal> predicate)
+    public List<? extends TFCAnimal> searchForAnimals(final Predicate<TFCAnimal> predicate)
     {
-        return WorldUtil.getEntitiesWithinBuilding(world, Animal.class, building, predicate);
+        return WorldUtil.getEntitiesWithinBuilding(world, TFCAnimal.class, building, predicate);
     }
 
     public int getMaxAnimalMultiplier()
@@ -607,7 +836,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      * @param animal the animal to walk to.
      * @return true if the herder is walking to the animal.
      */
-    public boolean walkingToAnimal(final Animal animal)
+    public boolean walkingToAnimal(final TFCAnimal animal)
     {
         if (animal != null)
         {
@@ -626,9 +855,9 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      */
     private boolean breedTwoAnimals()
     {
-        for (final Iterator<Animal> it = animalsToBreed.iterator(); it.hasNext(); )
+        for (final Iterator<TFCAnimal> it = animalsToBreed.iterator(); it.hasNext(); )
         {
-            final Animal animal = it.next();
+            final TFCAnimal animal = it.next();
             if (animal.isInLove() || animal.isDeadOrDying())
             {
                 it.remove();
@@ -645,6 +874,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
                 worker.getMainHandItem().shrink(1);
                 worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
                 worker.decreaseSaturationForAction();
+                animal.eatFood(worker.getMainHandItem(), InteractionHand.MAIN_HAND, getFakePlayer());
                 it.remove();
             }
         }
@@ -657,7 +887,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      * @param allAnimals the list of animals.
      * @return chance to butcher an animal
      */
-    public double chanceToButcher(final List<? extends Animal> allAnimals)
+    public double chanceToButcher(final List<? extends TFCAnimal> allAnimals)
     {
         final int maxAnimals = building.getBuildingLevel() * getMaxAnimalMultiplier();
         if (!building.getSetting(AbstractBuilding.BREEDING).getValue() && allAnimals.size() <= maxAnimals)
@@ -666,7 +896,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
         }
 
         int grownUp = 0;
-        for (Animal animalToButcher : allAnimals)
+        for (TFCAnimal animalToButcher : allAnimals)
         {
             if (!animalToButcher.isBaby())
             {
@@ -754,7 +984,7 @@ public abstract class AbstractEntityAIHerder<J extends AbstractJob<?, J>, B exte
      *
      * @param animal the {@link Animal} we are butchering
      */
-    protected void butcherAnimal(@Nullable final Animal animal)
+    protected void butcherAnimal(@Nullable final TFCAnimal animal)
     {
         if (animal != null && !walkingToAnimal(animal) && !ItemStackUtils.isEmpty(worker.getMainHandItem()))
         {

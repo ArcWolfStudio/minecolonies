@@ -10,6 +10,9 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
 import com.minecolonies.core.colony.buildings.modules.settings.BoolSetting;
 import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
+import net.dries007.tfc.common.entities.livestock.WoolyAnimal;
+import net.dries007.tfc.common.items.Food;
+import net.dries007.tfc.common.items.TFCItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
@@ -82,12 +85,13 @@ public class BuildingShepherd extends AbstractBuilding
     @Override
     public boolean canEat(final ItemStack stack)
     {
-        if (stack.getItem() == Items.WHEAT)
+        if (stack.getItem() == TFCItems.FOOD.get(Food.BARLEY_GRAIN).get())
         {
             return false;
         }
         return super.canEat(stack);
     }
+    //TODO:Add TFC Food
 
     /**
      * Sheep herding module
@@ -96,7 +100,7 @@ public class BuildingShepherd extends AbstractBuilding
     {
         public HerdingModule()
         {
-            super(ModJobs.shepherd.get(), a -> a instanceof Sheep, new ItemStack(Items.WHEAT, 2));
+            super(ModJobs.shepherd.get(), a -> a instanceof WoolyAnimal, new ItemStack(TFCItems.FOOD.get(Food.BARLEY_GRAIN).get(), 2));
         }
 
         @NotNull

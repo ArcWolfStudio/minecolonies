@@ -3,6 +3,7 @@ package com.minecolonies.core.entity.ai.workers.production.herders;
 import com.minecolonies.api.util.ItemStackUtils;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingRabbitHutch;
 import com.minecolonies.core.colony.jobs.JobRabbitHerder;
+import net.dries007.tfc.common.entities.livestock.TFCAnimal;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.animal.Animal;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.IDLE;
 import static com.minecolonies.api.util.constant.Constants.ONE_HUNDRED_PERCENT;
-
+//TODO: TO BE REMOVED FOR TFC
 /**
  * The AI behind the {@link JobRabbitHerder} for Breeding and Killing Rabbits.
  */
@@ -51,7 +52,7 @@ public class EntityAIWorkRabbitHerder extends AbstractEntityAIHerder<JobRabbitHe
     }
 
     @Override
-    protected void butcherAnimal(@Nullable final Animal animal)
+    protected void butcherAnimal(@Nullable final TFCAnimal animal)
     {
         if (animal != null && !walkingToAnimal(animal) && !ItemStackUtils.isEmpty(worker.getMainHandItem()))
         {

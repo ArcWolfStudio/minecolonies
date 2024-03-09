@@ -16,6 +16,9 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
 import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
 import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
+import net.dries007.tfc.common.entities.livestock.DairyAnimal;
+import net.dries007.tfc.common.items.Food;
+import net.dries007.tfc.common.items.TFCItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -96,12 +99,13 @@ public class BuildingCowboy extends AbstractBuilding
     @Override
     public boolean canEat(final ItemStack stack)
     {
-        if (stack.getItem() == Items.WHEAT)
+        if (stack.getItem() == TFCItems.FOOD.get(Food.BARLEY_GRAIN).get())
         {
             return false;
         }
         return super.canEat(stack);
     }
+    //TODO:Add other TFC Grain
 
     /**
      * Cow (and Mooshroom) herding module
@@ -114,7 +118,7 @@ public class BuildingCowboy extends AbstractBuilding
 
         public HerdingModule()
         {
-            super(ModJobs.cowboy.get(), a -> a instanceof Cow, new ItemStack(Items.WHEAT, 2));
+            super(ModJobs.cowboy.get(), a -> a instanceof DairyAnimal, new ItemStack(TFCItems.FOOD.get(Food.BARLEY_GRAIN).get(), 2));
         }
 
         @Override
@@ -122,17 +126,13 @@ public class BuildingCowboy extends AbstractBuilding
         {
             final int days = Math.max(1, getBuilding().getSetting(MILKING_DAYS).getValue());
             final int bucketsToKeep = (int) Math.ceil(2D * getBuilding().getSetting(MILKING_AMOUNT).getValue() / days);
-            final int bowlsToKeep = (int) Math.ceil(2D * getBuilding().getSetting(STEWING_AMOUNT).getValue() / days);
 
             final Map<Predicate<ItemStack>, Tuple<Integer, Boolean>> requiredItems = new HashMap<>();
             if (bucketsToKeep > 0)
             {
-                requiredItems.put(s -> s.is(Items.BUCKET), new Tuple<>(bucketsToKeep, false));
+                requiredItems.put(s -> s.is(TFCItems.WOODEN_BUCKET.get()), new Tuple<>(bucketsToKeep, false));
             }
-            if (bowlsToKeep > 0)
-            {
-                requiredItems.put(s -> s.is(Items.BOWL), new Tuple<>(bowlsToKeep, false));
-            }
+
             return requiredItems;
         }
 

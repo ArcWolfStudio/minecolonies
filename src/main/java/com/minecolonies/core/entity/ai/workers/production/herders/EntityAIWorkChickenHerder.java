@@ -7,6 +7,7 @@ import com.minecolonies.api.util.ItemStackUtils;
 import com.minecolonies.api.util.constant.Constants;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingChickenHerder;
 import com.minecolonies.core.colony.jobs.JobChickenHerder;
+import net.dries007.tfc.common.entities.livestock.TFCAnimal;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.animal.Animal;
@@ -57,7 +58,8 @@ public class EntityAIWorkChickenHerder extends AbstractEntityAIHerder<JobChicken
     }
 
     @Override
-    protected void butcherAnimal(@Nullable final Animal animal)
+    protected void butcherAnimal(@Nullable final TFCAnimal animal)
+            //TODO:Needs actual TFC Chicken/Duck/Quail animal type
     {
         if (animal != null && !walkingToAnimal(animal) && !ItemStackUtils.isEmpty(worker.getMainHandItem()))
         {

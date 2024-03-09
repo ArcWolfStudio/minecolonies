@@ -8,6 +8,8 @@ import com.minecolonies.api.util.InventoryUtils;
 import com.minecolonies.api.util.constant.Constants;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingCowboy;
 import com.minecolonies.core.colony.jobs.JobCowboy;
+import net.dries007.tfc.common.entities.livestock.DairyAnimal;
+import net.dries007.tfc.common.items.TFCItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -59,8 +61,8 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
     {
         super(job);
         super.registerTargets(
-          new AITarget(COWBOY_MILK, this::milkCows, 1),
-          new AITarget(COWBOY_STEW, this::milkMooshrooms, 1)
+          new AITarget(COWBOY_MILK, this::milkCows, 1)
+//          new AITarget(COWBOY_STEW, this::milkMooshrooms, 1)
         );
     }
 
@@ -68,14 +70,15 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
     protected void updateRenderMetaData()
     {
         String renderMeta = getState() == IDLE ? "" : RENDER_META_WORKING;
-        if (worker.getCitizenInventoryHandler().hasItemInInventory(Items.BUCKET))
+//        if (worker.getCitizenInventoryHandler().hasItemInInventory(Items.BUCKET))
+        if (worker.getCitizenInventoryHandler().hasItemInInventory(TFCItems.WOODEN_BUCKET.get()))
         {
             renderMeta += RENDER_META_BUCKET;
         }
-        if (worker.getCitizenInventoryHandler().hasItemInInventory(Items.BOWL))
-        {
-            renderMeta += RENDER_META_BOWL;
-        }
+//        if (worker.getCitizenInventoryHandler().hasItemInInventory(Items.BOWL))
+//        {
+//            renderMeta += RENDER_META_BOWL;
+//        }
         worker.setRenderMetadata(renderMeta);
     }
 
@@ -99,14 +102,14 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
             return COWBOY_MILK;
         }
 
-        if (stewCoolDown > 0)
-        {
-            --stewCoolDown;
-        }
-        else if (building != null && building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToStew() && result.equals(START_WORKING))
-        {
-            return COWBOY_STEW;
-        }
+//        if (stewCoolDown > 0)
+//        {
+//            --stewCoolDown;
+//        }
+//        else if (building != null && building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToStew() && result.equals(START_WORKING))
+//        {
+//            return COWBOY_STEW;
+//        }
 
         return result;
     }
@@ -117,15 +120,16 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
     {
         final List<ItemStack> list = super.getExtraItemsNeeded();
         if (building != null && building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToMilk() &&
-              !searchForAnimals(a -> a instanceof Cow && !(a instanceof MushroomCow)).isEmpty())
+//              !searchForAnimals(a -> a instanceof Cow && !(a instanceof MushroomCow)).isEmpty())
+                !searchForAnimals(a -> a instanceof DairyAnimal).isEmpty())
         {
-            list.add(new ItemStack(Items.BUCKET));
+            list.add(new ItemStack(TFCItems.WOODEN_BUCKET.get()));
         }
-        if (building != null && building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToStew() &&
-              !searchForAnimals(a -> a instanceof MushroomCow).isEmpty())
-        {
-            list.add(new ItemStack(Items.BOWL));
-        }
+//        if (building != null && building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToStew() &&
+//              !searchForAnimals(a -> a instanceof MushroomCow).isEmpty())
+//        {
+//            list.add(new ItemStack(Items.BOWL));
+//        }
         return list;
     }
 
@@ -138,12 +142,12 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
     {
         worker.getCitizenData().setVisibleStatus(HERD_COW);
 
-        if (!worker.getCitizenInventoryHandler().hasItemInInventory(Items.BUCKET))
+        if (!worker.getCitizenInventoryHandler().hasItemInInventory(TFCItems.WOODEN_BUCKET.get()))
         {
-            if (InventoryUtils.hasBuildingEnoughElseCount(building, new ItemStorage(new ItemStack(Items.BUCKET, 1)), 1) > 0
-                  && !walkToBuilding())
+            if (InventoryUtils.hasBuildingEnoughElseCount(building, new ItemStorage(new ItemStack(TFCItems.WOODEN_BUCKET.get(), 1)), 1) > 0
+                    && !walkToBuilding())
             {
-                checkAndTransferFromHut(new ItemStack(Items.BUCKET, 1));
+                checkAndTransferFromHut(new ItemStack(TFCItems.WOODEN_BUCKET.get(), 1));
             }
             else
             {
@@ -152,8 +156,8 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
             }
         }
 
-        final Cow cow = searchForAnimals(a -> a instanceof Cow && !(a instanceof MushroomCow) && !a.isBaby()).stream()
-                          .map(a -> (Cow) a).findFirst().orElse(null);
+        final DairyAnimal cow = searchForAnimals(a -> a instanceof DairyAnimal && !a.isBaby() && !a.isMale()).stream()
+                .map(a -> (DairyAnimal) a).findFirst().orElse(null);
 
         if (cow == null)
         {
@@ -161,14 +165,29 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
             return DECIDE;
         }
 
-        if (equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.BUCKET))) && !walkingToAnimal(cow))
+//        if (equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.BUCKET))) && !walkingToAnimal(cow))
+//        {
+//            if (InventoryUtils.addItemStackToItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.MILK_BUCKET)))
+//            {
+//                building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onMilked();
+//                worker.getCitizenItemHandler().removeHeldItem();
+//                equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.MILK_BUCKET)));
+//                InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.BUCKET, 1));
+//            }
+//
+//            incrementActionsDoneAndDecSaturation();
+//            worker.getCitizenExperienceHandler().addExperience(1.0);
+//            return INVENTORY_FULL;
+//        }
+        if (equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(TFCItems.WOODEN_BUCKET.get()))) && !walkingToAnimal(cow))
         {
-            if (InventoryUtils.addItemStackToItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.MILK_BUCKET)))
+            if (cow.getFamiliarity() > .20f && cow.isReadyForAnimalProduct())
             {
+                //TODO: adjust to allow for mobinteraction and milking of cow/goats from TFC
                 building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onMilked();
                 worker.getCitizenItemHandler().removeHeldItem();
                 equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.MILK_BUCKET)));
-                InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.BUCKET, 1));
+                InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), new ItemStack(TFCItems.WOODEN_BUCKET.get(), 1));
             }
 
             incrementActionsDoneAndDecSaturation();
@@ -184,56 +203,56 @@ public class EntityAIWorkCowboy extends AbstractEntityAIHerder<JobCowboy, Buildi
      *
      * @return The next {@link IAIState}
      */
-    private IAIState milkMooshrooms()
-    {
-        worker.getCitizenData().setVisibleStatus(HERD_COW);
-
-        if (!worker.getCitizenInventoryHandler().hasItemInInventory(Items.BOWL))
-        {
-            if (InventoryUtils.hasBuildingEnoughElseCount(building, new ItemStorage(new ItemStack(Items.BOWL, 1)), 1) > 0
-                  && !walkToBuilding())
-            {
-                checkAndTransferFromHut(new ItemStack(Items.BOWL, 1));
-            }
-            else
-            {
-                stewCoolDown = MILK_COOL_DOWN;
-                return DECIDE;
-            }
-        }
-
-        final MushroomCow mooshroom = searchForAnimals(a -> a instanceof MushroomCow && !a.isBaby()).stream()
-                                        .map(a -> (MushroomCow) a).findFirst().orElse(null);
-
-        if (mooshroom == null)
-        {
-            stewCoolDown = MILK_COOL_DOWN;
-            return DECIDE;
-        }
-
-        if (equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.BOWL))) && !walkingToAnimal(mooshroom))
-        {
-            final FakePlayer fakePlayer = FakePlayerFactory.getMinecraft((ServerLevel) worker.level);
-            fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BOWL));
-            if (mooshroom.mobInteract(fakePlayer, InteractionHand.MAIN_HAND).equals(InteractionResult.CONSUME))
-            {
-                if (InventoryUtils.addItemStackToItemHandler(worker.getInventoryCitizen(), fakePlayer.getMainHandItem()))
-                {
-                    building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onStewed();
-                    worker.getCitizenItemHandler().removeHeldItem();
-                    equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(fakePlayer.getMainHandItem()));
-                    InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.BOWL));
-                }
-                fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-            }
-
-            incrementActionsDoneAndDecSaturation();
-            worker.getCitizenExperienceHandler().addExperience(1.0);
-            return INVENTORY_FULL;
-        }
-
-        return DECIDE;
-    }
+//    private IAIState milkMooshrooms()
+//    {
+//        worker.getCitizenData().setVisibleStatus(HERD_COW);
+//
+//        if (!worker.getCitizenInventoryHandler().hasItemInInventory(Items.BOWL))
+//        {
+//            if (InventoryUtils.hasBuildingEnoughElseCount(building, new ItemStorage(new ItemStack(Items.BOWL, 1)), 1) > 0
+//                  && !walkToBuilding())
+//            {
+//                checkAndTransferFromHut(new ItemStack(Items.BOWL, 1));
+//            }
+//            else
+//            {
+//                stewCoolDown = MILK_COOL_DOWN;
+//                return DECIDE;
+//            }
+//        }
+//
+//        final MushroomCow mooshroom = searchForAnimals(a -> a instanceof MushroomCow && !a.isBaby()).stream()
+//                                        .map(a -> (MushroomCow) a).findFirst().orElse(null);
+//
+//        if (mooshroom == null)
+//        {
+//            stewCoolDown = MILK_COOL_DOWN;
+//            return DECIDE;
+//        }
+//
+//        if (equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(new ItemStack(Items.BOWL))) && !walkingToAnimal(mooshroom))
+//        {
+//            final FakePlayer fakePlayer = FakePlayerFactory.getMinecraft((ServerLevel) worker.level);
+//            fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BOWL));
+//            if (mooshroom.mobInteract(fakePlayer, InteractionHand.MAIN_HAND).equals(InteractionResult.CONSUME))
+//            {
+//                if (InventoryUtils.addItemStackToItemHandler(worker.getInventoryCitizen(), fakePlayer.getMainHandItem()))
+//                {
+//                    building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onStewed();
+//                    worker.getCitizenItemHandler().removeHeldItem();
+//                    equipItem(InteractionHand.MAIN_HAND, Collections.singletonList(fakePlayer.getMainHandItem()));
+//                    InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), new ItemStack(Items.BOWL));
+//                }
+//                fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+//            }
+//
+//            incrementActionsDoneAndDecSaturation();
+//            worker.getCitizenExperienceHandler().addExperience(1.0);
+//            return INVENTORY_FULL;
+//        }
+//
+//        return DECIDE;
+//    }
 
     @Override
     public double getButcheringAttackDamage()

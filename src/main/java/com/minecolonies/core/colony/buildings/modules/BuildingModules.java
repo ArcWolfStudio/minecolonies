@@ -193,7 +193,7 @@ public class BuildingModules
         () -> WorkerBuildingModuleView::new);
     public static final BuildingEntry.ModuleProducer<SettingsModule,SettingsModuleView> SHEPERD_SETTINGS      =
       new BuildingEntry.ModuleProducer<>("sheperd_settings", () -> new SettingsModule().with(AbstractBuilding.BREEDING, new BoolSetting(true))
-        .with(BuildingShepherd.DYEING, new BoolSetting(true))
+//        .with(BuildingShepherd.DYEING, new BoolSetting(true)) //TFC removed
         .with(BuildingShepherd.SHEARING, new BoolSetting(true)), () -> SettingsModuleView::new);
     public static final BuildingEntry.ModuleProducer<BuildingShepherd.HerdingModule,IBuildingModuleView> SHEPERD_HERDING       =
       new BuildingEntry.ModuleProducer<>("sheperd_herding", BuildingShepherd.HerdingModule::new, null);

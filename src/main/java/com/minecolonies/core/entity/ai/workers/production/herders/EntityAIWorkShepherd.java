@@ -8,6 +8,9 @@ import com.minecolonies.core.Network;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingShepherd;
 import com.minecolonies.core.colony.jobs.JobShepherd;
 import com.minecolonies.core.network.messages.client.LocalizedParticleEffectMessage;
+import net.dries007.tfc.common.entities.livestock.WoolyAnimal;
+import net.dries007.tfc.common.items.TFCItems;
+import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.animal.Sheep;
@@ -45,7 +48,7 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
     {
         super(job);
         super.registerTargets(
-          new AITarget(SHEPHERD_SHEAR, this::shearSheep, TICKS_SECOND)
+          new AITarget(SHEPHERD_SHEAR, this::shearWooly, TICKS_SECOND)
         );
     }
 
@@ -72,9 +75,9 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
     {
         final IAIState result = super.decideWhatToDo();
 
-        final Sheep shearingSheep = findShearableSheep();
+        final WoolyAnimal shearingWooly = FindShearableWooly();
 
-        if (building.getSetting(BuildingShepherd.SHEARING).getValue() && result.equals(START_WORKING) && shearingSheep != null)
+        if (building.getSetting(BuildingShepherd.SHEARING).getValue() && result.equals(START_WORKING) && shearingWooly != null)
         {
             return SHEPHERD_SHEAR;
         }
@@ -94,10 +97,10 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
      * @return a shearable {@link Sheep} or null.
      */
     @Nullable
-    private Sheep findShearableSheep()
+    private WoolyAnimal FindShearableWooly()
     {
-        return searchForAnimals(a -> a instanceof Sheep sheepie && !sheepie.isSheared() && !sheepie.isBaby())
-                 .stream().map(a -> (Sheep) a).findAny().orElse(null);
+        return searchForAnimals(a -> a instanceof WoolyAnimal sheepie && sheepie.isReadyForAnimalProduct())
+                 .stream().map(a -> (WoolyAnimal) a).findAny().orElse(null);
     }
 
     /**
@@ -105,10 +108,10 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
      *
      * @return The next {@link IAIState}
      */
-    private IAIState shearSheep()
+    private IAIState shearWooly()
     {
 
-        final Sheep sheep = findShearableSheep();
+        final WoolyAnimal sheep = FindShearableWooly();
 
         if (sheep == null)
         {
@@ -126,36 +129,57 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
             {
                 return getState();
             }
-
-            int enchantmentLevel = worker.getMainHandItem().getEnchantmentLevel(Enchantments.BLOCK_FORTUNE);
-            enchantmentLevel *= Math.max(1.0, (getPrimarySkillLevel() / 5.0));
-
-            worker.swing(InteractionHand.MAIN_HAND);
-
             final List<ItemStack> items = new ArrayList<>();
+//            int enchantmentLevel = worker.getMainHandItem().getEnchantmentLevel(Enchantments.BLOCK_FORTUNE);
+//            enchantmentLevel *= Math.max(1.0, (getPrimarySkillLevel() / 5.0));
+//
+//            worker.swing(InteractionHand.MAIN_HAND);
+//
+//            final List<ItemStack> items = new ArrayList<>();
+//            if (!this.world.isClientSide)
+//            {
+//                sheep.setSheared(true);
+//                int qty = 1 + worker.getRandom().nextInt(enchantmentLevel + 1);
+//
+//                for (int j = 0; j < qty; ++j)
+//                {
+//                    items.add(new ItemStack(ITEM_BY_DYE.get(sheep.getColor())));
+//                }
+//            }
+//
+//            sheep.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+//            Network.getNetwork().sendToTrackingEntity(new LocalizedParticleEffectMessage(new ItemStack(ITEM_BY_DYE.get(sheep.getColor())), sheep.getOnPos().above()), worker);
+//            dyeSheepChance(sheep);
+//
+//            worker.getCitizenItemHandler().damageItemInHand(InteractionHand.MAIN_HAND, 1);
+//
+//            worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
+//            incrementActionsDoneAndDecSaturation();
+//
+//            for (final ItemStack item : items)
+//            {
+//                building.getModule(STATS_MODULE).incrementBy(ITEM_USED + ";" + item.getItem().getDescriptionId(), item.getCount());
+//                InventoryUtils.transferItemStackIntoNextBestSlotInItemHandler(item, (worker.getInventoryCitizen()));
+//            }
+//        }
             if (!this.world.isClientSide)
             {
-                sheep.setSheared(true);
-                int qty = 1 + worker.getRandom().nextInt(enchantmentLevel + 1);
-
-                for (int j = 0; j < qty; ++j)
-                {
-                    items.add(new ItemStack(ITEM_BY_DYE.get(sheep.getColor())));
-                }
+                BlockPos pos = BlockPos.containing(sheep.position());
+                sheep.isReadyForAnimalProduct();
+//                sheep.hasProduct();
+                sheep.onSheared(getFakePlayer(),new ItemStack(TFCItems.WOOL.get()),this.world,pos,1);//0.1.7
             }
-
-            sheep.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-            Network.getNetwork().sendToTrackingEntity(new LocalizedParticleEffectMessage(new ItemStack(ITEM_BY_DYE.get(sheep.getColor())), sheep.getOnPos().above()), worker);
-            dyeSheepChance(sheep);
-
+            worker.swing(InteractionHand.MAIN_HAND);
             worker.getCitizenItemHandler().damageItemInHand(InteractionHand.MAIN_HAND, 1);
-
             worker.getCitizenExperienceHandler().addExperience(XP_PER_ACTION);
             incrementActionsDoneAndDecSaturation();
+            int amount = sheep.getFamiliarity() > 0.99f ? 2 : 1;
+            for(int j = 0; j < amount; ++j){
+                items.add(new ItemStack(TFCItems.WOOL.get()));
+            }
 
             for (final ItemStack item : items)
             {
-                building.getModule(STATS_MODULE).incrementBy(ITEM_USED + ";" + item.getItem().getDescriptionId(), item.getCount());
                 InventoryUtils.transferItemStackIntoNextBestSlotInItemHandler(item, (worker.getInventoryCitizen()));
             }
         }
@@ -168,19 +192,19 @@ public class EntityAIWorkShepherd extends AbstractEntityAIHerder<JobShepherd, Bu
      *
      * @param sheep the {@link Sheep} to possibly dye.
      */
-    private void dyeSheepChance(final Sheep sheep)
-    {
-        if (building != null && building.getSetting(BuildingShepherd.DYEING).getValue())
-        {
-            final int chanceToDye = building.getBuildingLevel();
-            final int rand = worker.getRandom().nextInt(HUNDRED_PERCENT_CHANCE);
-
-            if (rand <= chanceToDye)
-            {
-                final DyeColor[] colors = DyeColor.values();
-                final int dyeIndex = worker.getRandom().nextInt(colors.length);
-                sheep.setColor(colors[dyeIndex]);
-            }
-        }
-    }
+//    private void dyeSheepChance(final Sheep sheep)
+//    {
+//        if (building != null && building.getSetting(BuildingShepherd.DYEING).getValue())
+//        {
+//            final int chanceToDye = building.getBuildingLevel();
+//            final int rand = worker.getRandom().nextInt(HUNDRED_PERCENT_CHANCE);
+//
+//            if (rand <= chanceToDye)
+//            {
+//                final DyeColor[] colors = DyeColor.values();
+//                final int dyeIndex = worker.getRandom().nextInt(colors.length);
+//                sheep.setColor(colors[dyeIndex]);
+//            }
+//        }
+//    }
 }
